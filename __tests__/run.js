@@ -14,6 +14,8 @@ const tests = [
     // require('./lambda-function-test'),
     // require('./switch-test'),
     require('./class-test'),
+    require('./module-test'),
+    require('./import-test'),
 ];
 
 // ----------------------------------------
