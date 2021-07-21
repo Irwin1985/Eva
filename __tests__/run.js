@@ -3,9 +3,9 @@ const Environment = require('../Environment');
 const { test } = require('./test-util');
 
 const tests = [
-    require('./self-eval-test.js'),
-    require('./math-test.js'),
-    require('./variable-test.js'),
+    //require('./self-eval-test.js'),
+    //require('./math-test.js'),
+    //require('./variable-test.js'),
     require('./block-test.js'),
     require('./if-test.js'),
     require('./while-test.js'),
@@ -13,6 +13,7 @@ const tests = [
     require('./user-defined-function-test'),
     require('./lambda-function-test'),
     require('./switch-test'),
+    require('./class-test'),
 ];
 
 // ----------------------------------------

@@ -2,7 +2,6 @@ const testUtil = require('./test-util.js');
 
 module.exports = eva => {
   testUtil.test(eva, `
-  (begin
     (var counter 0)
     (var result 0)
 
@@ -13,6 +12,5 @@ module.exports = eva => {
       )
     )
     result
-  )
   `, 10);
 };

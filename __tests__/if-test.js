@@ -6,7 +6,6 @@ const testUtil = require('./test-util.js');
  */
 module.exports = eva => {
     testUtil.test(eva, `
-    (begin
         (var x 10)
         (var y 0)
         (if (> x 10)
@@ -14,6 +13,5 @@ module.exports = eva => {
             (set y 30)
         )
         y
-    )
     `, 30);
 };

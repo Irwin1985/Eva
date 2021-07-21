@@ -13,6 +13,12 @@ class Eva {
         this._transformer = new Transformer();
     }
     /**
+     * Evaluates global code wrapping into a block.
+     */    
+    evalGlobal(expressions) {
+        return this._evalBlock(['block', expressions], this.global);
+    }
+    /**
      * Evaluates an expression in the given environment.
      */
     eval(exp, env = this.global) {
@@ -43,9 +49,20 @@ class Eva {
         
         // -----------------------------------------
         // Variable update: (set foo 10)
+        // if (exp[0] === 'set') {
+        //     const [_, name, value] = exp;
+        //     return env.assign(name, this.eval(value, env));
+        // }
         if (exp[0] === 'set') {
-            const [_, name, value] = exp;
-            return env.assign(name, this.eval(value, env));
+            const [_, ref, value] = exp;
+            // Assignment to a property:
+            if (ref[0] === 'prop') {
+                const [_tag, instance, propName] = ref;
+                const instanceEnv = this.eval(instance, env);
+                return instanceEnv.define(propName, this.eval(value, env));
+            }
+            // Simple assignment:
+            return env.assign(ref, this.eval(value, env));
         }
 
         // -----------------------------------------
@@ -145,6 +162,56 @@ class Eva {
         }
 
         // -----------------------------------------
+        // Class declaration: (class <Name> <Parent> <Body>)
+        if (exp[0] === 'class') {
+            const [_tag, name, parent, body] = exp;
+
+            // A class is an environment! -- a storage of methods,
+            // and shared properties:
+            let parentEnv = this.eval(parent, env); // if null then take the current env.
+            if (parentEnv === null) {
+               parentEnv = env; 
+            }
+            const classEnv = new Environment({}, parentEnv); // every class has a fresh new env.
+            // Body is evaluated in the class environment.
+            this._evalBody(body, classEnv);
+
+            // Class is accessible by name.
+            return env.define(name, classEnv);
+        }
+
+        // -----------------------------------------
+        // Class instantiation: (new <Class> <Arguments>...)
+        if (exp[0] === 'new') {
+            const classEnv = this.eval(exp[1], env);
+
+            // An instance of a class is an environment!
+            // The `parent` component of the instance environment
+            // is set to its class.
+            const instanceEnv = new Environment({}, classEnv);
+            const args = exp
+                .slice(2)
+                .map(arg => this.eval(arg, env));
+
+            this._callUserDefinedFunction(
+                classEnv.lookup('constructor'),
+                [instanceEnv, ...args],
+            );
+
+            return instanceEnv;
+        }
+
+        // -----------------------------------------
+        // Property access: (prop <instance> <name>)
+        if (exp[0] === 'prop') {
+            const [_tag, instance, name] = exp;
+            const instanceEnv = this.eval(instance, env);
+
+            return instanceEnv.lookup(name);
+        }
+
+
+        // -----------------------------------------
         // Function calls:
         //
         // (print "Hello World")
@@ -162,19 +229,33 @@ class Eva {
             }
 
             // 2. User-defined function:
-            const activationRecord = {}; // Dictionary
-            fn.params.forEach((param, index) => {
-                activationRecord[param] = args[index];
-            });
+            return this._callUserDefinedFunction(fn, args);
+            // const activationRecord = {}; // Dictionary
+            // fn.params.forEach((param, index) => {
+            //     activationRecord[param] = args[index];
+            // });
 
-            const activationEnv = new Environment(
-                activationRecord,
-                fn.env);
+            // const activationEnv = new Environment(
+            //     activationRecord,
+            //     fn.env);
 
-            return this._evalBody(fn.body, activationEnv);
+            // return this._evalBody(fn.body, activationEnv);
         }
         
         throw `Unimplemented: ${JSON.stringify(exp)}`;
+    }
+
+    _callUserDefinedFunction(fn, args) {
+        const activationRecord = {}; // Dictionary
+        fn.params.forEach((param, index) => {
+            activationRecord[param] = args[index];
+        });
+
+        const activationEnv = new Environment(
+            activationRecord,
+            fn.env);
+
+        return this._evalBody(fn.body, activationEnv);        
     }
 
     /**
