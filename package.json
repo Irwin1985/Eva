@@ -1,0 +1,19 @@
+{
+    "name": "eva",
+    "version": "1.0.0",
+    "description": "Essentials of Interpretation",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "Irwin Rodríguez",
+    "license": "MIT",
+    "bin": {
+        "say-hello": "./index.js"
+    },
+    "pkg": {
+        "assets": "node_modules/**/*"
+    },
+    "help": "pkg . --target host --output myapp-1.0.0-x64.exe --debug"
+}
